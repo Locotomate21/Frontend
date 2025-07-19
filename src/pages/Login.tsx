@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
-import type { CredentialResponse } from '@react-oauth/google';
-import api from '../api'; 
-
-interface GoogleJwtPayload {
-  name: string;
-  email: string;
-  picture: string;
-}
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -22,7 +13,7 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const response = await api.post('/auth/login', {
+      const response = await axios.post('http://localhost:2000/api/auth/login', {
         username: email,
         password,
       });
@@ -30,32 +21,10 @@ const Login: React.FC = () => {
       const { token, role } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
-
       navigate('/dashboard');
     } catch (err) {
       console.error(err);
       setError('Credenciales inválidas. Verifica tus datos.');
-    }
-  };
-
-  const handleGoogle = async (response: CredentialResponse) => {
-    try {
-      const idToken = response.credential;
-      if (!idToken) throw new Error("No se recibió token de Google");
-
-      const payload = jwtDecode<GoogleJwtPayload>(idToken);
-      console.log("Usuario autenticado con Google:", payload);
-
-      const res = await api.post('/auth/google', { token: idToken }); // Ajusta esta ruta según tu backend
-
-      const { token, role } = res.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('role', role);
-
-      navigate('/dashboard');
-    } catch (error) {
-      console.error("Error al iniciar sesión con Google:", error);
-      setError("Error al iniciar sesión con Google.");
     }
   };
 
@@ -117,14 +86,18 @@ const Login: React.FC = () => {
               Iniciar sesión
             </button>
 
-            <div className="w-full flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogle}
-                onError={() => {
-                  setError("Error al iniciar sesión con Google.");
-                }}
-              />
-            </div>
+            <button
+              type="button"
+              className="w-full bg-white text-gray-700 border-2 border-gray-200 rounded-lg py-3 flex items-center justify-center gap-2 hover:border-blue-500 hover:shadow-md transition"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" className="inline">
+                <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+                <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 0 1-2.7.75c-2.09 0-3.87-1.4-4.5-3.32H1.78v2.08A7.99 7.99 0 0 0 8.98 17z"/>
+                <path fill="#FBBC05" d="M4.5 10.7a4.8 4.8 0 0 1 0-3.07V5.55H1.78a7.98 7.98 0 0 0 0 7.17l2.72-2.02z"/>
+                <path fill="#EA4335" d="M8.98 3.58c1.32 0 2.5.45 3.44 1.35l2.54-2.7A7.98 7.98 0 0 0 8.98 1a7.99 7.99 0 0 0-7.2 4.55l2.72 2.05c.63-1.93 2.4-3.32 4.5-3.02z"/>
+              </svg>
+              Iniciar con Google
+            </button>
 
             <p className="text-center text-sm text-gray-600">
               ¿Olvidaste tu contraseña?{' '}
