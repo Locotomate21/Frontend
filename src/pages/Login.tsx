@@ -13,14 +13,17 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:2000/api/auth/login', {
-        username: email,
+      const response = await axios.post('http://localhost:2000/auth/login', {
+        email,
         password,
       });
+      
 
-      const { token, role } = response.data;
+      const { token, role, fullName } = response.data;
       localStorage.setItem('token', token);
+      localStorage.setItem('email', email);
       localStorage.setItem('role', role);
+      localStorage.setItem('fullName', fullName);
       navigate('/dashboard');
     } catch (err) {
       console.error(err);
