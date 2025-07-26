@@ -5,9 +5,9 @@ import NewsPage from './pages/NewsPage';
 import AssembliesPage from './pages/AssembliesPage';
 import DisciplinaryPage from './pages/DisciplinaryPage';
 import MaintenancePage from './pages/MaintenancePage';
-
 import DashboardLayout from './layouts/DashboardLayout';
 import PrivateRoute from './components/PrivateRoute';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -23,7 +23,7 @@ function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<Home />} />
+          <Route index element={<Dashboard />} />
           <Route path="news" element={<NewsPage />} />
           <Route path="assemblies" element={<AssembliesPage />} />
           <Route path="disciplinary" element={<DisciplinaryPage />} />

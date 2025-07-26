@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,13 +20,18 @@ const Login: React.FC = () => {
         email,
         password,
       });
-      
 
       const { token, role, fullName } = response.data;
+
+      // Guardar en Zustand
+      setAuth({ token, email, role, fullName });
+
+      // Guardar en localStorage (opcional)
       localStorage.setItem('token', token);
+      localStorage.setItem('fullName', fullName);
       localStorage.setItem('email', email);
       localStorage.setItem('role', role);
-      localStorage.setItem('fullName', fullName);
+
       navigate('/dashboard');
     } catch (err) {
       console.error(err);
@@ -34,8 +42,6 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 font-sans">
       <div className="flex flex-col md:flex-row w-[90%] max-w-[1200px] bg-white rounded-2xl shadow-2xl overflow-hidden">
-
-        {/* Lado izquierdo */}
         <div className="flex-1 bg-gradient-to-br from-blue-500 to-blue-700 text-white flex flex-col items-center justify-center px-10 py-16 relative">
           <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center shadow-xl mb-8">
             <span className="text-blue-500 text-5xl font-bold font-serif">G</span>
@@ -51,7 +57,6 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Lado derecho */}
         <div className="flex-1 px-8 md:px-12 py-14 flex flex-col justify-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">¡Bienvenido residente!</h2>
           <p className="text-sm text-gray-600 mb-8">

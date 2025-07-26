@@ -11,8 +11,9 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveSection }) => {
 
   useEffect(() => {
     const fullName = localStorage.getItem('fullName') || 'Usuario';
+    const firstName = fullName.split(" ")[0];
     const storedRole = localStorage.getItem('role');
-    if (fullName) setEmail(fullName);
+    if (firstName) setEmail(firstName);
     if (storedRole) setRole(storedRole);
   }, []);
   
