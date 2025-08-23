@@ -1,15 +1,5 @@
 import React from 'react';
-import { 
-  Home, 
-  Newspaper, 
-  Users, 
-  AlertTriangle, 
-  Wrench, 
-  User, 
-  LogOut,
-  ChevronLeft,
-  Building2
-} from 'lucide-react';
+import { Home, Newspaper, Users, AlertTriangle, Wrench, User, LogOut,ChevronLeft,Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
@@ -25,13 +15,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed, 
   setIsCollapsed 
 }) => {
-     const menuItems = [
+      const menuItems = [
     { id: 'dashboard', label: 'Inicio', icon: Home, path: '/dashboard' },
-    { id: 'news', label: 'Noticias', icon: Newspaper, path: '/news' },
-    { id: 'assemblies', label: 'Asambleas', icon: Users, path: '/assemblies' },
-    { id: 'disciplinary', label: 'Medidas Disciplinarias', icon: AlertTriangle, path: '/disciplinary' },
-    { id: 'maintenance', label: 'Reparaciones', icon: Wrench, path: '/maintenance' },
-    { id: 'profile', label: 'Perfil', icon: User, path: '/profile' },
+    { id: 'news', label: 'Noticias', icon: Newspaper, path: '/dashboard/news' },
+    { id: 'assemblies', label: 'Asambleas', icon: Users, path: '/dashboard/assemblies' },
+    { id: 'disciplinary', label: 'Medidas Disciplinarias', icon: AlertTriangle, path: '/dashboard/disciplinary' },
+    { id: 'maintenance', label: 'Reparaciones', icon: Wrench, path: '/dashboard/maintenance' },
+    { id: 'profile', label: 'Perfil', icon: User, path: '/dashboard/profile' },
   ];
 
   const navigate = useNavigate();

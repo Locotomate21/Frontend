@@ -1,6 +1,11 @@
 {
+  
   "compilerOptions": {
-    "target": "es6",                        
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "target": "es6",
     "lib": ["dom", "dom.iterable", "esnext"],
     "module": "esnext",
     "moduleResolution": "node",
@@ -16,6 +21,7 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["react", "react-dom"]         
   },
+  
   "include": ["src", "index.tsx"],
   "exclude": ["node_modules"]
 }

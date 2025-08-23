@@ -6,8 +6,10 @@ import AssembliesPage from './pages/AssembliesPage';
 import DisciplinaryPage from './pages/DisciplinaryPage';
 import MaintenancePage from './pages/MaintenancePage';
 import DashboardLayout from './layouts/DashboardLayout';
-import PrivateRoute from './components/PrivateRoute';
-import Dashboard from './pages/Dashboard';
+import PrivateRoute from './routes/PrivateRoute';
+import ProfilePage from './pages/ProfilePage';
+import DashboardRouter from './routes/DashboardRouter';
+
 
 function App() {
   return (
@@ -23,11 +25,13 @@ function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<DashboardRouter />} />
           <Route path="news" element={<NewsPage />} />
           <Route path="assemblies" element={<AssembliesPage />} />
           <Route path="disciplinary" element={<DisciplinaryPage />} />
           <Route path="maintenance" element={<MaintenancePage />} />
+          <Route path="profile" element={<ProfilePage />} />
+
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />

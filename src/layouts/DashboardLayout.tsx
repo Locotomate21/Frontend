@@ -1,41 +1,34 @@
-import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar'; 
-import TopBar from '../components/TopBar';
+import React, { useState } from "react";
+import { Outlet } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
+import TopBar from "../components/TopBar";
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/" />;
-};
+const DashboardLayout: React.FC = () => {
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-const DashboardLayout = () => {
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const [activeSection, setActiveSection] = React.useState('dashboard');
-
-  const handleSectionChange = (section: string) => {
-    setActiveSection(section);
-  };
-  
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar desde componente externo */}
-      <Sidebar 
-        activeSection={activeSection} 
-        setActiveSection={handleSectionChange} 
-        isCollapsed={isCollapsed} 
-        setIsCollapsed={setIsCollapsed} 
+      {/* Sidebar */}
+      <Sidebar
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
       />
 
-       {/* Contenido principal con TopBar */}
-      <main className="flex-1 bg-gray-100">
-        <TopBar setActiveSection={handleSectionChange} />
-        <div className="p-10">
-          <Outlet /> {/* Aquí se cargan las páginas internas */}
-        </div>
-      </main>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* TopBar */}
+        <TopBar setActiveSection={setActiveSection} />
+
+        {/* Page Content */}
+        <main className="flex-1 p-6 bg-gray-100">
+          <Outlet /> {/* Aquí se cargan tus páginas hijas */}
+        </main>
+      </div>
     </div>
   );
 };
 
 export default DashboardLayout;
-

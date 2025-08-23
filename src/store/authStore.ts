@@ -1,20 +1,46 @@
-    // src/store/authStore.ts
-    import { create } from 'zustand';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-    interface AuthState {
-    token: string | null;
-    email: string | null;
-    role: string | null;
-    fullName: string | null;
-    setAuth: (authData: { token: string; email: string; role: string; fullName: string }) => void;
-    logout: () => void;
+type AuthData = {
+  token: string | null;
+  email: string | null;
+  role: string | null;
+  fullName: string | null;
+};
+
+type AuthState = {
+  auth: AuthData;
+  setAuth: (data: AuthData) => void;
+  logout: () => void;
+};
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      auth: {
+        token: null,
+        email: null,
+        role: null,
+        fullName: null,
+      },
+
+      setAuth: (data) => {
+        set({ auth: data });
+      },
+
+      logout: () => {
+        set({
+          auth: {
+            token: null,
+            email: null,
+            role: null,
+            fullName: null,
+          },
+        });
+      },
+    }),
+    {
+      name: "auth-storage", // nombre clave en localStorage
     }
-
-    export const useAuthStore = create<AuthState>((set) => ({
-    token: null,
-    email: null,
-    role: null,
-    fullName: null,
-    setAuth: ({ token, email, role, fullName }) => set({ token, email, role, fullName }),
-    logout: () => set({ token: null, email: null, role: null, fullName: null }),
-    }));
+  )
+);

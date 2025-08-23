@@ -1,17 +1,31 @@
     import React, { useEffect, useState } from 'react';
     import axios from 'axios';
 
+    type DashboardStats = {
+    activeResidents: number;
+    newResidentsThisMonth: number;
+    occupancyRate: number;
+    occupiedRooms: number;
+    totalRooms: number;
+    pendingRequests: number;
+    pendingRequestsVariation: number;
+    monthlyIncidents: number;
+    incidentStatus: string;
+    };
+
     const Home = () => {
     const fullName = localStorage.getItem('fullName') || 'Usuario';
     const firstName = fullName.split(' ')[0];
     const role = localStorage.getItem('role') || 'Admin';
 
-    const [stats, setStats] = useState(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
         try {
-            const response = await axios.get('http://localhost:2000/api/dashboard/stats'); 
+            const response = await axios.get<DashboardStats>(
+            'http://localhost:3000/api/dashboard/stats'
+            );
             setStats(response.data);
         } catch (error) {
             console.error('Error al obtener las estadísticas:', error);
@@ -60,7 +74,13 @@
     };
 
     // Componente reutilizable para las tarjetas
-    const StatCard = ({ title, value, subtitle }) => (
+    type StatCardProps = {
+    title: string;
+    value: number | string;
+    subtitle: string;
+    };
+
+    const StatCard = ({ title, value, subtitle }: StatCardProps) => (
     <div className="bg-white shadow rounded-xl p-6 border border-gray-200">
         <h3 className="text-sm text-gray-500 mb-1">{title}</h3>
         <div className="text-3xl font-bold text-blue-700">{value}</div>

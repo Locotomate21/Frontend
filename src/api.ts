@@ -1,13 +1,9 @@
-    import axios from 'axios';
+import axios from "./axios";
 
-    const api = axios.create({
-    baseURL: 'http://localhost:2000', // tu API
-    });
+export const AuthAPI = {
+  register: (data: { fullName: string; email: string; password: string }) =>
+    axios.post("/auth/register", data),
 
-    api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-    });
-
-    export default api;
+  login: (data: { email: string; password: string }) =>
+    axios.post("/auth/login", data),
+};
