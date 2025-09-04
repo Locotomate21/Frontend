@@ -1,22 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import { Bell, Search, User, Settings } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
+import axios from 'axios';
 
 interface TopBarProps {
   setActiveSection: (section: string) => void;
 }
 
+interface DashboardStats {
+  activeResidents: number;
+  occupiedRooms: number;
+  reportsCount: number;
+}
+
 const TopBar: React.FC<TopBarProps> = ({ setActiveSection }) => {
-  const [email, setEmail] = useState('Usuario');
-  const [role, setRole] = useState('Admin');
+  const { auth } = useAuthStore((state) => state);
+  const fullName = auth?.fullName || 'Usuario';
+  const firstName = fullName.split(' ')[0];
+
+  // Capitalizamos el rol para mostrarlo correctamente
+  const roleRaw = auth?.role || 'Usuario';
+  const role =
+    roleRaw.toLowerCase() === 'representative'
+      ? 'Representante'
+      : roleRaw.charAt(0).toUpperCase() + roleRaw.slice(1);
+
+  const [stats, setStats] = useState<DashboardStats>({
+    activeResidents: 0,
+    occupiedRooms: 0,
+    reportsCount: 0,
+  });
 
   useEffect(() => {
-    const fullName = localStorage.getItem('fullName') || 'Usuario';
-    const firstName = fullName.split(" ")[0];
-    const storedRole = localStorage.getItem('role');
-    if (firstName) setEmail(firstName);
-    if (storedRole) setRole(storedRole);
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('/representative/dashboard', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const payload = res.data || {};
+        setStats({
+          activeResidents: payload.stats?.activeResidents || 0,
+          occupiedRooms: payload.stats?.occupiedRooms || 0,
+          reportsCount: payload.stats?.reportsCount || 0,
+        });
+      } catch (err) {
+        console.error('Error al cargar stats del TopBar:', err);
+      }
+    };
+    fetchStats();
   }, []);
-  
+
+  // Sumamos todas las notificaciones
+  const totalNotifications = stats.activeResidents + stats.occupiedRooms + stats.reportsCount;
+
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -37,13 +74,17 @@ const TopBar: React.FC<TopBarProps> = ({ setActiveSection }) => {
           {/* Notifications */}
           <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
             <Bell className="h-6 w-6" />
-            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+            {totalNotifications > 0 && (
+              <span className="absolute top-0 right-0 min-w-[18px] h-4 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {totalNotifications}
+              </span>
+            )}
           </button>
 
           {/* User Menu */}
           <div className="flex items-center space-x-3">
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{email}</p>
+              <p className="text-sm font-medium text-gray-900">{firstName}</p>
               <p className="text-xs text-gray-500">{role}</p>
             </div>
             <button

@@ -1,7 +1,57 @@
-import React from 'react';
-import { User, LogOut } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { User } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
+import api from '@/axios';
+
+interface ProfileData {
+  fullName: string;
+  email: string;
+  phone?: string;
+  role: string;
+  roomNumber?: string;
+  entryDate?: string;
+}
 
 const ProfilePage = () => {
+  const { auth } = useAuthStore((state) => state);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!auth?.token) return;
+
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/resident/me', {
+          headers: { Authorization: `Bearer ${auth.token}` },
+        });
+
+        const data = res.data;
+        // Mapear datos del backend al formato de frontend
+        setProfile({
+          fullName: data.fullName,
+          email: data.email,
+          phone: data.phone || '', // si lo tienes en el schema
+          role: data.role,
+          roomNumber: data.room?.number?.toString() || '',
+          entryDate: data.enrollmentDate
+            ? new Date(data.enrollmentDate).toLocaleDateString()
+            : '',
+        });
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || 'Error al cargar perfil');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [auth?.token]);
+
+  if (loading) return <div>Cargando perfil...</div>;
+  if (error) return <div className="text-red-500">Error: {error}</div>;
+
   return (
     <div className="bg-white rounded-xl shadow-md p-8 max-w-5xl mx-auto mt-10">
       {/* Encabezado */}
@@ -14,41 +64,23 @@ const ProfilePage = () => {
 
       {/* Contenido */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Información Personal */}
         <div>
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Información Personal</h3>
           <div className="space-y-4">
-            <Input label="Nombre completo" value="Ana García Rodríguez" />
-            <Input label="Email" value="ana.garcia@residencia.edu" />
-            <Input label="Teléfono" value="+57 310 456 7890" />
-            <Input label="Rol" value="Residente" />
+            <Input label="Nombre completo" value={profile?.fullName || ''} />
+            <Input label="Email" value={profile?.email || ''} />
+            <Input label="Teléfono" value={profile?.phone || ''} />
+            <Input label="Rol" value={profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : ''} />
           </div>
         </div>
 
-        {/* Información de Residencia */}
         <div>
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Datos de Residencia</h3>
           <div className="space-y-4">
-            <Input label="Número de habitación" value="B-203" />
-            <Input label="Fecha de ingreso" value="01/02/2024" />
-            <Input label="Duración de contrato" value="2 semestres" />
+            <Input label="Número de habitación" value={profile?.roomNumber || ''} />
+            <Input label="Fecha de ingreso" value={profile?.entryDate || ''} />
           </div>
         </div>
-      </div>
-
-      {/* Configuración */}
-      <div className="mt-10">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Configuración</h3>
-        <div className="space-y-4">
-          <ToggleSetting label="Recibir notificaciones por email" enabled />
-        </div>
-      </div>
-
-      {/* Botón Editar */}
-      <div className="mt-8 flex justify-end">
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-          Editar Perfil
-        </button>
       </div>
     </div>
   );
@@ -66,22 +98,4 @@ const Input = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-const ToggleSetting = ({ label, enabled }: { label: string; enabled: boolean }) => (
-  <div className="flex items-center justify-between">
-    <span className="text-sm text-gray-700">{label}</span>
-    <button
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-        enabled ? 'bg-blue-600' : 'bg-gray-300'
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-          enabled ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      ></span>
-    </button>
-  </div>
-);
-
 export default ProfilePage;
-

@@ -6,6 +6,7 @@ type AuthData = {
   email: string | null;
   role: string | null;
   fullName: string | null;
+  floor?: number | null;
 };
 
 type AuthState = {
@@ -22,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
         email: null,
         role: null,
         fullName: null,
+        floor: null,
       },
 
       setAuth: (data) => {
@@ -35,12 +37,13 @@ export const useAuthStore = create<AuthState>()(
             email: null,
             role: null,
             fullName: null,
+            floor: null,
           },
         });
       },
     }),
     {
-      name: "auth-storage", // nombre clave en localStorage
+      name: "auth-storage", // clave en localStorage
     }
   )
 );

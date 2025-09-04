@@ -19,15 +19,37 @@ const Login: React.FC = () => {
       // Usamos la instancia api que ya tiene baseURL y withCredentials
       const response = await api.post('/auth/login', { email, password });
 
-      const { token, role, fullName } = response.data;
+      console.log("Respuesta del backend:", response.data);
 
-      if (!token || !role || !fullName) {
+      // 👇 Ajusta estos nombres cuando veamos qué trae exactamente
+      const { token, role, fullName, user, access_token } = response.data;
+
+      // Por ahora validamos con cualquiera de los formatos comunes
+      if (!token && !access_token) {
         throw new Error('Respuesta del servidor no válida');
       }
 
+      // Usamos token en cualquiera de las dos variantes
+      const finalToken = token || access_token;
+
       // Guardamos la info en el store
-      setAuth({ token, email, role, fullName });
-      console.log('Auth seteado:', { token, email, role, fullName });
+      setAuth({
+        token: finalToken,
+        email: user?.email || email,
+        role: role || user?.role || null,
+        fullName: fullName || user?.fullName || null,
+        floor: user?.floor ?? null,
+      });
+
+      localStorage.setItem('token', finalToken);
+
+      console.log('Auth seteado:', {
+        token: finalToken,
+        email: user?.email || email,
+        role: role || user?.role,
+        fullName: fullName || user?.fullName,
+        floor: user?.floor,
+      });
 
       // Redirigimos al dashboard
       navigate('/dashboard', { replace: true });

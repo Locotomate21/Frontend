@@ -1,12 +1,14 @@
+import { Reports } from "../ReportsPage";
+
 export interface Room {
   number: string;
   floor: number;
   occupied: boolean;
   currentResident?: string;
-  servicesCount?: number;
+  reportsCount?: number;
 }
 
-export interface Service {
+export interface Report {
   id: number;
   description: string;
   status: string;
@@ -18,22 +20,23 @@ export interface Service {
 
 export interface FloorRanking {
   floor: number;
-  totalServices: number;
+  totalReports: number;
   totalIncidents: number;
 }
 
+// ⬇️ Reemplazar Stats por StatsResponseDto real
 export interface Stats {
+  totalResidents: number;
   activeResidents: number;
-  occupancyRate: number;
-  occupiedRooms: number;
   totalRooms: number;
-  pendingRequests: number;
-  monthlyIncidents: number;
+  occupiedRooms: number;
+  freeRooms: number;
+  reportsCount: number;
 }
 
 export interface AdminDashboardData {
   stats: Stats;
   rooms: Room[];
-  services: Service[];
+  reports: Reports[];
   floorRanking: FloorRanking[];
 }

@@ -1,135 +1,123 @@
-import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '@/store/authStore';
-import api from '@/axios';
-import { AdminDashboardData, Room, Service, FloorRanking, Stats } from './types';
+import React, { useEffect, useState, Dispatch, SetStateAction } from 'react';
 import { Users, Home, Calendar, AlertTriangle, Search, Filter } from 'lucide-react';
+import StatsCard from '../../components/StatsCard';
+import RecentActivity from '../../components/RecentActivity';
+import QuickActions from '../../components/QuickActions';
+import api from '@/axios';
+import { AdminDashboardData, Room, Report, FloorRanking, Stats } from './types';
 
 interface AdminDashboardProps {
-  data: AdminDashboardData;
+  setActiveSection: Dispatch<SetStateAction<string>>;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ data }) => {
-  const token = useAuthStore((state) => state.auth.token);
-  const [dashboardData, setDashboardData] = useState<AdminDashboardData>(data);
+const defaultStats: Stats = {
+  totalResidents: 0,
+  activeResidents: 0,
+  totalRooms: 0,
+  occupiedRooms: 0,
+  freeRooms: 0,
+  reportsCount: 0,
+};
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ setActiveSection }) => {
+  const [stats, setStats] = useState<Stats>(defaultStats);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [floorRanking, setFloorRanking] = useState<FloorRanking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        // Métricas
+        const token = localStorage.getItem('token');
         const statsRes = await api.get<Stats>('/admin/metrics', {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Habitaciones
         const roomsRes = await api.get<Room[]>('/rooms', {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Servicios
-        const servicesRes = await api.get<Service[]>('/reports', {
+        const reportsRes = await api.get<Report[]>('/reports', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // Ranking por piso
+        setStats(statsRes.data || defaultStats);
+        setRooms(roomsRes.data || []);
+        setReports(reportsRes.data || []);
+
         const floors = Array.from(new Set(roomsRes.data.map((r) => r.floor)));
-        const floorRanking: FloorRanking[] = floors.map((floor) => {
-          const servicesFloor = servicesRes.data.filter((s) => s.floor === floor);
-          const incidents = servicesFloor.filter((s) => s.status === 'incident');
+        const ranking: FloorRanking[] = floors.map((floor) => {
+          const reportsFloor = reportsRes.data.filter((r) => r.floor === floor);
+          const incidents = reportsFloor.filter((r) => r.status === 'incident');
           return {
             floor,
-            totalServices: servicesFloor.length,
+            totalReports: reportsFloor.length,
             totalIncidents: incidents.length,
           };
         });
-
-        setDashboardData({
-          stats: statsRes.data,
-          rooms: roomsRes.data,
-          services: servicesRes.data,
-          floorRanking,
-        });
-      } catch (err) {
-        console.error(err);
-        setError('Error cargando el dashboard');
+        setFloorRanking(ranking);
+      } catch (err: any) {
+        setError(err.message || 'Error cargando dashboard');
       } finally {
         setLoading(false);
       }
     };
-
     fetchDashboard();
-  }, [token]);
+  }, []);
 
   if (loading) return <p className="text-center mt-10">Cargando...</p>;
   if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
-  if (!dashboardData) return <p className="text-center mt-10">No hay datos</p>;
 
-  const { stats, rooms, services, floorRanking } = dashboardData;
-
-  // Filtrar habitaciones por búsqueda
   const filteredRooms = rooms.filter(
     (r) =>
       r.number.toString().includes(searchTerm) ||
       (r.currentResident && r.currentResident.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const occupancyPercentage = stats.totalRooms
+    ? Math.round((stats.occupiedRooms / stats.totalRooms) * 100)
+    : 0;
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Métricas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Residentes Activos</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.activeResidents}</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Ocupación</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.occupancyRate}%</p>
-              <p className="text-sm text-gray-500">{stats.occupiedRooms} / {stats.totalRooms}</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <Home className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Solicitudes Pendientes</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.pendingRequests}</p>
-            </div>
-            <div className="p-3 bg-yellow-100 rounded-full">
-              <Calendar className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Incidentes Mensuales</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.monthlyIncidents}</p>
-            </div>
-            <div className="p-3 bg-red-100 rounded-full">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Residentes Activos"
+          value={stats.activeResidents}
+          change={`de ${stats.totalResidents}`}
+          changeType="neutral"
+          icon={Users}
+          color="blue"
+        />
+        <StatsCard
+          title="Habitaciones Ocupadas"
+          value={`${occupancyPercentage}%`}
+          change={`${stats.occupiedRooms}/${stats.totalRooms}`}
+          changeType="neutral"
+          icon={Home}
+          color="green"
+        />
+        <StatsCard
+          title="Reportes Totales"
+          value={stats.reportsCount}
+          change="Últimos reportes"
+          changeType="neutral"
+          icon={Calendar}
+          color="yellow"
+        />
+        <StatsCard
+          title="Incidentes"
+          value={stats.reportsCount}
+          change="Reporte general"
+          changeType="neutral"
+          icon={AlertTriangle}
+          color="red"
+        />
       </div>
 
-      {/* Tabla de habitaciones */}
+      {/* Habitaciones */}
       <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold mb-4">Habitaciones</h2>
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -165,7 +153,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ data }) => {
                   <td className="px-4 py-2">{room.floor}</td>
                   <td className="px-4 py-2">{room.occupied ? 'Sí' : 'No'}</td>
                   <td className="px-4 py-2">{room.currentResident || '-'}</td>
-                  <td className="px-4 py-2">{room.servicesCount || 0}</td>
+                  <td className="px-4 py-2">{room.reportsCount || 0}</td>
                 </tr>
               ))}
             </tbody>
@@ -173,35 +161,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* Servicios */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Servicios</h2>
-        <ul className="bg-white rounded-lg shadow border divide-y">
-          {services.map((service) => (
-            <li key={service.id} className="p-4">
-              <p>
-                <strong>{service.description}</strong> — {service.status}  
-                (habitación {service.roomNumber}, piso {service.floor})  
-              </p>
-              <p className="text-sm text-gray-500">
-                Reportado por: {service.reportedBy} el {service.dateReported}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Recent Activity */}
+      <RecentActivity />
 
-      {/* Ranking por piso */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Ranking por Piso</h2>
-        <ul className="bg-white rounded-lg shadow border divide-y">
-          {floorRanking.map((floor) => (
-            <li key={floor.floor} className="p-4">
-              Piso {floor.floor}: {floor.totalServices} servicios, {floor.totalIncidents} incidentes
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Quick Actions */}
+      <QuickActions setActiveSection={setActiveSection} />
     </div>
   );
 };

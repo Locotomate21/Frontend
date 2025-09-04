@@ -20,7 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'news', label: 'Noticias', icon: Newspaper, path: '/dashboard/news' },
     { id: 'assemblies', label: 'Asambleas', icon: Users, path: '/dashboard/assemblies' },
     { id: 'disciplinary', label: 'Medidas Disciplinarias', icon: AlertTriangle, path: '/dashboard/disciplinary' },
-    { id: 'maintenance', label: 'Reparaciones', icon: Wrench, path: '/dashboard/maintenance' },
+    { id: 'reports', label: 'Reparaciones', icon: Wrench, path: '/dashboard/reports' },
     { id: 'profile', label: 'Perfil', icon: User, path: '/dashboard/profile' },
   ];
 

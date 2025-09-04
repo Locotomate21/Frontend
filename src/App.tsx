@@ -4,12 +4,11 @@ import Home from './pages/Home';
 import NewsPage from './pages/NewsPage';
 import AssembliesPage from './pages/AssembliesPage';
 import DisciplinaryPage from './pages/DisciplinaryPage';
-import MaintenancePage from './pages/MaintenancePage';
+import ReportsPage from './pages/ReportsPage'; 
 import DashboardLayout from './layouts/DashboardLayout';
 import PrivateRoute from './routes/PrivateRoute';
 import ProfilePage from './pages/ProfilePage';
 import DashboardRouter from './routes/DashboardRouter';
-
 
 function App() {
   return (
@@ -29,9 +28,8 @@ function App() {
           <Route path="news" element={<NewsPage />} />
           <Route path="assemblies" element={<AssembliesPage />} />
           <Route path="disciplinary" element={<DisciplinaryPage />} />
-          <Route path="maintenance" element={<MaintenancePage />} />
+          <Route path="reports" element={<ReportsPage />} /> 
           <Route path="profile" element={<ProfilePage />} />
-
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />
