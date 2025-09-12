@@ -4,15 +4,12 @@ import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
 
 const DashboardLayout: React.FC = () => {
-  const [activeSection, setActiveSection] = useState("dashboard");
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <Sidebar
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
       />
@@ -20,11 +17,11 @@ const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* TopBar */}
-        <TopBar setActiveSection={setActiveSection} />
+        <TopBar />
 
         {/* Page Content */}
         <main className="flex-1 p-6 bg-gray-100">
-          <Outlet /> {/* Aquí se cargan tus páginas hijas */}
+          <Outlet /> {/* Aquí se cargan las páginas hijas */}
         </main>
       </div>
     </div>

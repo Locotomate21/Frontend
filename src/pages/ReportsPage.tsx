@@ -24,7 +24,7 @@ interface Report {
   createdBy?: { fullName: string };
 }
 
-const RepairsPage: React.FC = () => {
+const ReportsPage: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -390,4 +390,4 @@ const RepairsPage: React.FC = () => {
   );
 };
 
-export default RepairsPage;
+export default ReportsPage;

@@ -1,41 +1,46 @@
-import React from 'react';
-import { Home, Newspaper, Users, AlertTriangle, Wrench, User, LogOut,ChevronLeft,Building2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import {
+  Home,
+  Newspaper,
+  Users,
+  AlertTriangle,
+  Wrench,
+  User,
+  LogOut,
+  ChevronLeft,
+  Building2,
+} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface SidebarProps {
-  activeSection: string;
-  setActiveSection: (section: string) => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  activeSection, 
-  setActiveSection, 
-  isCollapsed, 
-  setIsCollapsed 
-}) => {
-      const menuItems = [
-    { id: 'dashboard', label: 'Inicio', icon: Home, path: '/dashboard' },
-    { id: 'news', label: 'Noticias', icon: Newspaper, path: '/dashboard/news' },
-    { id: 'assemblies', label: 'Asambleas', icon: Users, path: '/dashboard/assemblies' },
-    { id: 'disciplinary', label: 'Medidas Disciplinarias', icon: AlertTriangle, path: '/dashboard/disciplinary' },
-    { id: 'reports', label: 'Reparaciones', icon: Wrench, path: '/dashboard/reports' },
-    { id: 'profile', label: 'Perfil', icon: User, path: '/dashboard/profile' },
-  ];
-
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const menuItems = [
+    { id: "dashboard", label: "Inicio", icon: Home, path: "/dashboard" },
+    { id: "news", label: "Noticias", icon: Newspaper, path: "/dashboard/news" },
+    { id: "assemblies", label: "Asambleas", icon: Users, path: "/dashboard/assemblies" },
+    { id: "disciplinary", label: "Medidas Disciplinarias", icon: AlertTriangle, path: "/dashboard/disciplinary" },
+    { id: "reports", label: "Reparaciones", icon: Wrench, path: "/dashboard/reports" },
+    { id: "profile", label: "Perfil", icon: User, path: "/dashboard/profile" },
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate('/');
+    navigate("/");
   };
-  
+
   return (
-    <div className={`bg-blue-700 text-white shadow-lg transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    } min-h-screen flex flex-col`}>
-      
+    <div
+      className={`bg-blue-700 text-white shadow-lg transition-all duration-300 ${
+        isCollapsed ? "w-16" : "w-64"
+      } min-h-screen flex flex-col`}
+    >
       {/* Header */}
       <div className="p-4 border-b border-white-300 flex items-center justify-between">
         {!isCollapsed && (
@@ -48,9 +53,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-1 rounded-lg hover:bg-white-300 transition-colors"
         >
-          <ChevronLeft className={`h-5 w-5 transition-transform ${
-            isCollapsed ? 'rotate-180' : ''
-          }`} />
+          <ChevronLeft
+            className={`h-5 w-5 transition-transform ${
+              isCollapsed ? "rotate-180" : ""
+            }`}
+          />
         </button>
       </div>
 
@@ -59,21 +66,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         <ul className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeSection === item.id;
+            const isActive = location.pathname === item.path;
 
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => {
-                    setActiveSection(item.id);
-                    navigate(item.path);
-                  }}
+                  onClick={() => navigate(item.path)}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive 
-                      ? 'bg-blue-600 text-white' 
-                      : 'text-slate-300 hover:bg-blue-700 hover:text-white'
+                    isActive
+                      ? "bg-blue-600 text-white"
+                      : "text-slate-300 hover:bg-blue-700 hover:text-white"
                   }`}
-                  title={isCollapsed ? item.label : ''}
+                  title={isCollapsed ? item.label : ""}
                 >
                   <Icon className="h-5 w-5" />
                   {!isCollapsed && <span>{item.label}</span>}
@@ -86,7 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Logout */}
       <div className="p-4 border-t border-b border-white-300">
-        <button 
+        <button
           onClick={handleLogout}
           className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition-colors"
         >

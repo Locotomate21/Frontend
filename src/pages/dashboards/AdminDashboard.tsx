@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Dispatch, SetStateAction } from 'react';
+import React, { useEffect, useState, Dispatch, SetStateAction, ReactNode } from 'react';
 import { Users, Home, Calendar, AlertTriangle, Search, Filter } from 'lucide-react';
 import StatsCard from '../../components/StatsCard';
 import RecentActivity from '../../components/RecentActivity';
@@ -7,7 +7,9 @@ import api from '@/axios';
 import { AdminDashboardData, Room, Report, FloorRanking, Stats } from './types';
 
 interface AdminDashboardProps {
+  activeSection: string;
   setActiveSection: Dispatch<SetStateAction<string>>;
+  children?: ReactNode;
 }
 
 const defaultStats: Stats = {
@@ -19,7 +21,7 @@ const defaultStats: Stats = {
   reportsCount: 0,
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ setActiveSection }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeSection, setActiveSection, children }) => {
   const [stats, setStats] = useState<Stats>(defaultStats);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -162,10 +164,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ setActiveSection }) => 
       </div>
 
       {/* Recent Activity */}
-      <RecentActivity />
+      <RecentActivity />  
 
       {/* Quick Actions */}
       <QuickActions setActiveSection={setActiveSection} />
+
+      {/* Render children passed from AdminPage */}
+      {children}
     </div>
   );
 };

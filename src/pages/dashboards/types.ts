@@ -1,5 +1,3 @@
-import { Reports } from "../ReportsPage";
-
 export interface Room {
   number: string;
   floor: number;
@@ -24,7 +22,6 @@ export interface FloorRanking {
   totalIncidents: number;
 }
 
-// ⬇️ Reemplazar Stats por StatsResponseDto real
 export interface Stats {
   totalResidents: number;
   activeResidents: number;
@@ -37,6 +34,6 @@ export interface Stats {
 export interface AdminDashboardData {
   stats: Stats;
   rooms: Room[];
-  reports: Reports[];
+  reports: Report[];   // ✅ corregido
   floorRanking: FloorRanking[];
 }
