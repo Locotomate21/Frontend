@@ -1,21 +1,25 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+interface PrivateRouteProps {
+  children: React.ReactNode;
+}
+
+const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   const auth = useAuthStore((state) => state.auth);
 
-  // 🔹 Si auth es null o undefined, evita redirigir inmediatamente
+  // Si todavía no sabemos el estado de auth
   if (auth === undefined) {
     return <div>Cargando...</div>;
   }
 
-  // 🔹 Si no hay token, redirige al login
+  // Si no hay token -> redirige al login
   if (!auth?.token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
-  // 🔹 Usuario autenticado, renderiza children
+  // Usuario autenticado -> renderiza children
   return <>{children}</>;
 };
 

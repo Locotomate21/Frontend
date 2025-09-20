@@ -1,75 +1,32 @@
-import React, { useEffect, useState, Dispatch, SetStateAction, ReactNode } from 'react';
-import { Users, Home, Calendar, AlertTriangle, Search, Filter } from 'lucide-react';
-import StatsCard from '../../components/StatsCard';
-import RecentActivity from '../../components/RecentActivity';
-import QuickActions from '../../components/QuickActions';
-import api from '@/axios';
-import { AdminDashboardData, Room, Report, FloorRanking, Stats } from './types';
+import React, { useState, Dispatch, SetStateAction, ReactNode } from "react";
+import { Users, Home, Calendar, AlertTriangle, Search, Filter } from "lucide-react";
+import StatsCard from "../../components/StatsCard";
+import RecentActivity from "../../components/RecentActivity";
+import QuickActions from "../../components/QuickActions";
+import { AdminDashboardData, Stats } from "./types";
 
 interface AdminDashboardProps {
+  data: AdminDashboardData; // 👈 recibe la data ya cargada
   activeSection: string;
   setActiveSection: Dispatch<SetStateAction<string>>;
   children?: ReactNode;
 }
 
-const defaultStats: Stats = {
-  totalResidents: 0,
-  activeResidents: 0,
-  totalRooms: 0,
-  occupiedRooms: 0,
-  freeRooms: 0,
-  reportsCount: 0,
-};
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ data, activeSection, setActiveSection, children }) => {
+  const [searchTerm, setSearchTerm] = useState("");
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeSection, setActiveSection, children }) => {
-  const [stats, setStats] = useState<Stats>(defaultStats);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [reports, setReports] = useState<Report[]>([]);
-  const [floorRanking, setFloorRanking] = useState<FloorRanking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const stats: Stats = data.stats || {
+    totalResidents: 0,
+    activeResidents: 0,
+    totalRooms: 0,
+    occupiedRooms: 0,
+    freeRooms: 0,
+    reportsCount: 0,
+  };
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const statsRes = await api.get<Stats>('/admin/metrics', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const roomsRes = await api.get<Room[]>('/rooms', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const reportsRes = await api.get<Report[]>('/reports', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setStats(statsRes.data || defaultStats);
-        setRooms(roomsRes.data || []);
-        setReports(reportsRes.data || []);
-
-        const floors = Array.from(new Set(roomsRes.data.map((r) => r.floor)));
-        const ranking: FloorRanking[] = floors.map((floor) => {
-          const reportsFloor = reportsRes.data.filter((r) => r.floor === floor);
-          const incidents = reportsFloor.filter((r) => r.status === 'incident');
-          return {
-            floor,
-            totalReports: reportsFloor.length,
-            totalIncidents: incidents.length,
-          };
-        });
-        setFloorRanking(ranking);
-      } catch (err: any) {
-        setError(err.message || 'Error cargando dashboard');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, []);
-
-  if (loading) return <p className="text-center mt-10">Cargando...</p>;
-  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
+  const rooms = data.rooms || [];
+  const reports = data.reports || [];
+  const floorRanking = data.floorRanking || [];
 
   const filteredRooms = rooms.filter(
     (r) =>
@@ -153,8 +110,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeSection, setActiv
                 <tr key={room.number} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-2">{room.number}</td>
                   <td className="px-4 py-2">{room.floor}</td>
-                  <td className="px-4 py-2">{room.occupied ? 'Sí' : 'No'}</td>
-                  <td className="px-4 py-2">{room.currentResident || '-'}</td>
+                  <td className="px-4 py-2">{room.occupied ? "Sí" : "No"}</td>
+                  <td className="px-4 py-2">{room.currentResident || "-"}</td>
                   <td className="px-4 py-2">{room.reportsCount || 0}</td>
                 </tr>
               ))}
@@ -164,12 +121,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeSection, setActiv
       </div>
 
       {/* Recent Activity */}
-      <RecentActivity />  
+      <RecentActivity />
 
       {/* Quick Actions */}
       <QuickActions setActiveSection={setActiveSection} />
 
-      {/* Render children passed from AdminPage */}
+      {/* Render children */}
       {children}
     </div>
   );

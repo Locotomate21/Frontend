@@ -1,4 +1,4 @@
-import axios from "./axios";
+import axios from "../services/axios";
 
 export const AuthAPI = {
   register: (data: { fullName: string; email: string; password: string }) =>

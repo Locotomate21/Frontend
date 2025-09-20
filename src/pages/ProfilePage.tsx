@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { User } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthStore } from "../store/authStore";
-import api from "@/axios";
+import api from "../services/axios";
 
 interface ProfileData {
   fullName: string;

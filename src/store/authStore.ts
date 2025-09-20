@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type AuthData = {
+export type AuthData = {
+  _id: string | null;  
   token: string | null;
   email: string | null;
-  role: string | null;
+  role: "admin" | "resident" | "president" | "secretary_general" | "representative" | "auditor" | 'floor_auditor' | 'general_auditor' | null; // 🔹 roles explícitos
   fullName: string | null;
-  floor?: number | null;
+  floor: number | null; // 🔹 siempre presente, no opcional
 };
 
 type AuthState = {
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       auth: {
+        _id: null,
         token: null,
         email: null,
         role: null,
@@ -26,21 +28,19 @@ export const useAuthStore = create<AuthState>()(
         floor: null,
       },
 
-      setAuth: (data) => {
-        set({ auth: data });
-      },
+      setAuth: (data) => set({ auth: data }),
 
-      logout: () => {
+      logout: () =>
         set({
           auth: {
+            _id: null,
             token: null,
             email: null,
             role: null,
             fullName: null,
             floor: null,
           },
-        });
-      },
+        }),
     }),
     {
       name: "auth-storage", // clave en localStorage

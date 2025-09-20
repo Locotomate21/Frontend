@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, MapPin, Users, Clock, X } from "lucide-react";
-import api from "@/axios";
+import { Calendar, MapPin, Users, X } from "lucide-react";
+import api from "../services/axios";
+import { useAuthStore } from "../store/authStore";
 
 interface Assembly {
   _id: string;
@@ -13,25 +14,40 @@ interface Assembly {
     total: number;
   };
   status: "Programada" | "Completada";
+  type: "general" | "floor";
+  floor?: number;
+  createdBy?: string;
 }
 
-const AssembliesSection = () => {
+const AssembliesPage = () => {
+  const { role, floor } = useAuthStore((state) => state.auth);
   const [assemblies, setAssemblies] = useState<Assembly[]>([]);
-  const [selectedAssembly, setSelectedAssembly] = useState<Assembly | null>(null);
+  const [selectedAssembly, setSelectedAssembly] = useState<Assembly | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<Assembly>>({
+    title: "",
+    date: "",
+    time: "",
+    location: "",
+    status: "Programada",
+    type: role === "representative" ? "floor" : "general",
+  });
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const fetchAssemblies = async () => {
-      try {
-        const res = await api.get("/assemblies"); // Endpoint backend
-        console.log("📡 Asambleas desde backend:", res.data);
-        setAssemblies(res.data);
-      } catch (err) {
-        console.error("Error cargando asambleas:", err);
-      }
-    };
     fetchAssemblies();
   }, []);
+
+  const fetchAssemblies = async () => {
+    try {
+      const res = await api.get("/assemblies");
+      setAssemblies(res.data);
+    } catch (err) {
+      console.error("Error cargando asambleas:", err);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -42,97 +58,142 @@ const AssembliesSection = () => {
     });
   };
 
-  const openModal = (assembly: Assembly) => {
-    setSelectedAssembly(assembly);
+  const openModal = (assembly?: Assembly) => {
+    if (assembly) {
+      setIsEditing(true);
+      setFormData({ ...assembly });
+      setSelectedAssembly(assembly);
+    } else {
+      setIsEditing(false);
+      setFormData({
+        title: "",
+        date: "",
+        time: "",
+        location: "",
+        status: "Programada",
+        type: role === "representative" ? "floor" : "general",
+      });
+      setSelectedAssembly(null);
+    }
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedAssembly(null);
+    setFormData({});
+  };
+
+  const handleSave = async () => {
+    try {
+      if (isEditing && selectedAssembly) {
+        // Editar
+        const res = await api.put(`/assemblies/${selectedAssembly._id}`, formData);
+        setAssemblies(
+          assemblies.map((a) => (a._id === selectedAssembly._id ? res.data : a))
+        );
+      } else {
+        // Crear
+        const payload = {
+          ...formData,
+          ...(role === "representative" ? { floor } : {}),
+        };
+        const res = await api.post("/assemblies", payload);
+        setAssemblies([...assemblies, res.data]);
+      }
+      closeModal();
+    } catch (err) {
+      console.error("Error guardando asamblea:", err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar esta asamblea?")) return;
+    try {
+      await api.delete(`/assemblies/${id}`);
+      setAssemblies(assemblies.filter((a) => a._id !== id));
+    } catch (err) {
+      console.error("Error eliminando asamblea:", err);
+    }
+  };
+
+  const canManage = (assembly: Assembly) => {
+    if (role === "admin" || role === "president" || role === "secretary_general") {
+      return true;
+    }
+    if (role === "representative" && assembly.type === "floor" && assembly.floor === floor) {
+      return true;
+    }
+    return false;
   };
 
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Asambleas</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Consulta las próximas y pasadas asambleas
-              </p>
-            </div>
-            <div className="flex items-center space-x-2 text-blue-600">
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium">{assemblies.length} asambleas</span>
-            </div>
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Asambleas</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Consulta, crea o administra asambleas
+            </p>
           </div>
+          {(role === "admin" || role === "president" || role === "secretary_general" || role === "representative") && (
+            <button
+              onClick={() => openModal()}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Nueva Asamblea
+            </button>
+          )}
         </div>
 
         {/* Lista de asambleas */}
         <div className="divide-y divide-gray-100">
           {assemblies.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <Calendar className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No hay asambleas disponibles
-              </h3>
-              <p className="text-gray-500">
-                Las próximas asambleas aparecerán aquí cuando estén programadas.
-              </p>
+            <div className="p-12 text-center text-gray-500">
+              No hay asambleas registradas.
             </div>
           ) : (
-            assemblies.map((assembly, index) => (
-              <div
-                key={assembly._id}
-                className="group hover:bg-gray-50 transition-colors duration-200"
-              >
-                <div className="p-6 relative">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className="text-lg font-semibold text-gray-900 mb-2 cursor-pointer group-hover:text-blue-600 transition-colors duration-200"
-                        onClick={() => openModal(assembly)}
-                      >
-                        {assembly.title}
-                      </h3>
-
-                      <div className="flex flex-wrap items-center text-sm text-gray-500 space-x-4 mb-2">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {formatDate(assembly.date)} - {assembly.time}
-                        </div>
-                        <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {assembly.location}
-                        </div>
-                        {assembly.attendance && (
-                          <div className="flex items-center">
-                            <Users className="w-4 h-4 mr-1" />
-                            {`${assembly.attendance.present}/${assembly.attendance.total} presentes (${Math.round((assembly.attendance.present/assembly.attendance.total)*100)}%)`}
-                          </div>
-                        )}
+            assemblies.map((assembly) => (
+              <div key={assembly._id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {assembly.title}
+                    </h3>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {formatDate(assembly.date)} - {assembly.time}
                       </div>
-
-                      <span
-                        className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                          assembly.status === "Programada"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-200 text-gray-700"
-                        }`}
-                      >
-                        {assembly.status}
-                      </span>
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {assembly.location}
+                      </div>
+                      {assembly.attendance && (
+                        <div className="flex items-center">
+                          <Users className="w-4 h-4 mr-1" />
+                          {`${assembly.attendance.present}/${assembly.attendance.total} presentes`}
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  {/* Indicador de novedad */}
-                  {index === 0 && assembly.status === "Programada" && (
-                    <div className="absolute left-0 top-6 w-1 h-16 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full"></div>
+                  {canManage(assembly) && (
+                    <div className="flex gap-2 mt-3 md:mt-0">
+                      <button
+                        onClick={() => openModal(assembly)}
+                        className="px-3 py-1 text-sm text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-lg hover:bg-yellow-200"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(assembly._id)}
+                        className="px-3 py-1 text-sm text-red-700 bg-red-100 border border-red-300 rounded-lg hover:bg-red-200"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -141,65 +202,80 @@ const AssembliesSection = () => {
         </div>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && selectedAssembly && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:p-0">
-            <div
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-              onClick={closeModal}
-            ></div>
+      {/* Modal Crear/Editar */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                {isEditing ? "Editar Asamblea" : "Nueva Asamblea"}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <div className="relative inline-block align-bottom bg-white rounded-xl shadow-xl transform transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:align-middle">
-              <div className="bg-gradient-to-r from-blue-50 to-teal-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Detalles de la Asamblea</h3>
-                  <button
-                    onClick={closeModal}
-                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition-colors duration-200"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="px-6 py-6 space-y-3">
-                <h2 className="text-xl font-bold text-gray-900">{selectedAssembly.title}</h2>
-                <div className="flex flex-col space-y-1 text-gray-600 text-sm">
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {formatDate(selectedAssembly.date)} - {selectedAssembly.time}
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {selectedAssembly.location}
-                  </div>
-                  {selectedAssembly.attendance && (
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
-                      {`${selectedAssembly.attendance.present}/${selectedAssembly.attendance.total} presentes (${Math.round((selectedAssembly.attendance.present/selectedAssembly.attendance.total)*100)}%)`}
-                    </div>
-                  )}
-                  <span
-                    className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                      selectedAssembly.status === "Programada"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    {selectedAssembly.status}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Título"
+                value={formData.title || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                className="w-full border rounded-lg p-2"
+              />
+              <input
+                type="date"
+                value={formData.date || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, date: e.target.value })
+                }
+                className="w-full border rounded-lg p-2"
+              />
+              <input
+                type="time"
+                value={formData.time || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, time: e.target.value })
+                }
+                className="w-full border rounded-lg p-2"
+              />
+              <input
+                type="text"
+                placeholder="Ubicación"
+                value={formData.location || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+                className="w-full border rounded-lg p-2"
+              />
+              {(role === "admin" ||
+                role === "president" ||
+                role === "secretary_general") && (
+                <select
+                  value={formData.type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, type: e.target.value as "floor" | "general" })
+                  }
+                  className="w-full border rounded-lg p-2"
                 >
-                  Cerrar
-                </button>
-              </div>
+                  <option value="general">General</option>
+                  <option value="floor">De Piso</option>
+                </select>
+              )}
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Guardar
+              </button>
             </div>
           </div>
         </div>
@@ -208,4 +284,4 @@ const AssembliesSection = () => {
   );
 };
 
-export default AssembliesSection;
+export default AssembliesPage;

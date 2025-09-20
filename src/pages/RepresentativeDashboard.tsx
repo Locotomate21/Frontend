@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import StatsCard from "../components/StatsCard";
 import { useAuthStore } from "../store/authStore";
 import { Users, Home, AlertTriangle, DoorOpen } from "lucide-react";
-import api from "@/axios";
+import api from "../services/axios";
 import {
   PieChart,
   Pie,

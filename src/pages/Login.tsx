@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import api from '../axios';
+import api from '../services/axios';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -34,6 +34,7 @@ const Login: React.FC = () => {
 
       // Guardamos la info en el store
       setAuth({
+        _id: user?._id || null,
         token: finalToken,
         email: user?.email || email,
         role: role || user?.role || null,
