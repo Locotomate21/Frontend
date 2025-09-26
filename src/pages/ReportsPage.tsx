@@ -19,7 +19,7 @@ interface Report {
   urgent?: boolean;
   date: string;
   room?: string;
-  description?: string;
+  description?: string; 
   location?: string;
   studentCode?: number;
   resident?: {
@@ -58,10 +58,9 @@ const ReportsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
+  const [loading, setLoading] = useState(true);
   const [newReport, setNewReport] = useState(initialNewReport);
   const [editReport, setEditReport] = useState(initialEditReport);
-
   const { role, fullName, token } = useAuthStore((state) => state.auth);
 
   const canCreate =
@@ -87,10 +86,11 @@ const ReportsPage: React.FC = () => {
   };
 
   const createReport = async () => {
-    if (!newReport.studentCode || newReport.studentCode <= 0 || isNaN(newReport.studentCode)) {
-      alert("Debes ingresar un código de estudiante válido (número).");
-      return;
-    }
+  const studentCodeNumber = Number(newReport.studentCode);
+  if (!newReport.studentCode || isNaN(studentCodeNumber) || studentCodeNumber <= 0) {
+    alert("Debes ingresar un código de estudiante válido.");
+    return;
+  }
 
     if (!newReport.reason.trim()) {
     alert("Debes ingresar un motivo para el reporte.");
@@ -256,6 +256,8 @@ const ReportsPage: React.FC = () => {
     };
   };
 
+  
+
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -286,7 +288,7 @@ const ReportsPage: React.FC = () => {
               No hay reportes disponibles
             </div>
           ) : (
-            reports.map((report) => {
+            reports.map((report, index) => {
               const status = getStatus(report);
 
               return (
@@ -295,6 +297,17 @@ const ReportsPage: React.FC = () => {
                   className="group hover:bg-gray-50 transition-colors duration-200"
                 >
                   <div className="p-6 relative flex justify-between items-start">
+                    <div className="flex-1">
+                    {/* Indicador para el reporte más reciente */}
+                    {index === 0 && (
+                      <div className="absolute left-0 top-6 w-1 h-16 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full"></div>
+                    )}
+
+                    {/* Indicador lateral para reportes urgentes (solo si no es el primero) */}
+                    {report.urgent && index !== 0 && (
+                      <div className="absolute left-0 top-6 w-1 h-16 bg-gradient-to-b from-red-500 to-red-600 rounded-r-full"></div>
+                    )}
+
                     <div className="flex-1">
                       {/* Estado y fecha */}
                       <div className="flex items-center space-x-3 mb-3">
@@ -349,19 +362,24 @@ const ReportsPage: React.FC = () => {
                         {/* Descripción */}
                         {report.description && (
                           <div className="text-sm text-gray-600">
-                            <span className="font-medium">Descripción:</span> {report.description}
+                            <span className="font-medium">Descripción:</span> {
+                            report.description
+                              .length > 100
+                              ? `${report.description.substring(0, 100)}...`
+                              : report.description
+                            }
                           </div>
                         )}
                       </div>
                     </div>
-
+                </div>
                     {/* Acciones */}
                     {canEditOrDelete(report) && (
-                      <div className="flex space-x-2">
+                      <div className="flex justify-between pt-4 border-t">
                         {/* Botón de editar */}
                         <button
                           onClick={() => openEditModal(report)}
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-105"
                           title="Editar reporte"
                         >
                           <Edit className="w-4 h-4" />
@@ -370,20 +388,18 @@ const ReportsPage: React.FC = () => {
                         {/* Botón finalizar */}
                         {!report.actionTaken && (
                           <button
-                            onClick={() =>
-                              updateReport(report._id, { actionTaken: "Finalizado" })
-                            }
-                            className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
+                            onClick={() => updateReport(report._id, { actionTaken: "Finalizado" })}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 hover:scale-105"
                             title="Marcar como finalizado"
                           >
-                            <CheckCircle2 className="w-4 h-4" />
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
                           </button>
                         )}
                         
                         {/* Botón eliminar */}
                         <button
                           onClick={() => deleteReport(report._id)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-105"
                           title="Eliminar reporte"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -391,11 +407,6 @@ const ReportsPage: React.FC = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* Indicador lateral */}
-                  {report.urgent && (
-                    <div className="absolute left-0 top-6 w-1 h-16 bg-red-500 rounded-r-full"></div>
-                  )}
                 </div>
               );
             })
@@ -403,31 +414,107 @@ const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal Detalle */}
-      {isModalOpen && selectedReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6">
-            <div className="flex justify-between items-center border-b pb-4 mb-4">
-              <h3 className="text-lg font-semibold">Detalle del Reporte</h3>
-              <button onClick={closeModal}>
-                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              </button>
-            </div>
-            <div className="space-y-3">
-              <p><strong>Motivo:</strong> {selectedReport.reason}</p>
-              {selectedReport.description && (
-                <p><strong>Descripción:</strong> {selectedReport.description}</p>
+              {/* Modal de detalles mejorado */}
+              {isModalOpen && selectedReport && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                  <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6">
+                    <div className="flex justify-between items-center border-b pb-4 mb-4">
+                      <h3 className="text-lg font-semibold">Detalles del Reporte</h3>
+                      <button
+                        onClick={closeModal}
+                        className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition-colors duration-200"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Título y descripción */}
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">
+                          {selectedReport.reason}
+                        </h2>
+                        {selectedReport.description && (
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <p className="text-gray-700">{selectedReport.description}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info adicional */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {selectedReport.date && (
+                          <div className="flex items-center text-gray-600">
+                            <Clock className="w-4 h-4 mr-2" />
+                            <span>Creado el {formatDate(selectedReport.date)}</span>
+                          </div>
+                        )}
+
+                        {selectedReport.resident && (
+                          <div className="flex items-center text-gray-600">
+                            <User className="w-4 h-4 mr-2" />
+                            <span>Residente: {selectedReport.resident.fullName}</span>
+                          </div>
+                        )}
+
+                        {selectedReport.createdBy && (
+                          <div className="flex items-center text-gray-600">
+                            <User className="w-4 h-4 mr-2" />
+                            <span>Creado por: {selectedReport.createdBy.fullName}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                              selectedReport.urgent
+                                ? "bg-red-100 text-red-800"
+                                : selectedReport.actionTaken
+                                ? "bg-green-100 text-green-800"
+                                : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            {selectedReport.urgent ? "Urgente" : selectedReport.actionTaken ? "Finalizado" : "Pendiente"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Botones de acción */}
+                      {canEditOrDelete(selectedReport) && (
+                        <div className="flex justify-end pt-4 border-t">
+                          {!selectedReport.actionTaken && (
+                            <button
+                              onClick={() =>
+                                updateReport(selectedReport._id, { actionTaken: "Finalizado" })
+                              }
+                              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-2" />
+                              Marcar como Finalizado
+                            </button>
+                          )}
+
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => deleteReport(selectedReport._id)}
+                              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors duration-200"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar
+                            </button>
+                            <button
+                              onClick={closeModal}
+                              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                            >
+                              Cerrar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
-              {selectedReport.room && (
-                <p><strong>Ubicación:</strong> {selectedReport.room}</p>
-              )}
-              {selectedReport.actionTaken && (
-                <p><strong>Acción tomada:</strong> {selectedReport.actionTaken}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal Crear */}
       {isCreateModalOpen && (
@@ -446,7 +533,7 @@ const ReportsPage: React.FC = () => {
                 placeholder="Código de estudiante (ej: 20165)"
                 value={newReport.studentCode}
                 onChange={(e) =>
-                  setNewReport({ ...newReport, studentCode: parseInt(e.target.value) })
+                  setNewReport({ ...newReport, studentCode: e.target.value })
                 }
                 className="w-full border rounded-lg px-3 py-2"
               />

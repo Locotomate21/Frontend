@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/axios";
-import { Calendar, User, ChevronRight, X, Clock, Building } from "lucide-react";
+import { Calendar, User, ChevronRight, X, Clock, Building, Trash2, Eye, Edit } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 interface CreatedBy {
@@ -76,34 +76,12 @@ const NewsSection = () => {
       : content.substring(0, maxLength) + "...";
   };
 
-  // 🔥 FUNCIÓN CORREGIDA CON DEBUG INTENSIVO
   const openModal = (newsItem: News) => {
-    console.log("🔥🔥🔥 openModal EJECUTADA!");
-    console.log("🔥 Parámetro recibido:", newsItem);
-    console.log("🔥 newsItem es válido?:", !!newsItem);
-    console.log("🔥 newsItem._id:", newsItem?._id);
-    console.log("🔥 Estado ANTES de cambiar:", { isModalOpen, selectedNews });
-    
-    // Cambiamos el estado paso a paso
-    console.log("🔥 Ejecutando setSelectedNews...");
     setSelectedNews(newsItem);
-    
-    console.log("🔥 Ejecutando setIsModalOpen(true)...");
     setIsModalOpen(true);
-    
-    console.log("🔥 Comandos enviados. Esperando re-render...");
-    
-    // Verificamos después de un timeout para ver si cambió
-    setTimeout(() => {
-      console.log("🔥 Estado después de 100ms:", { 
-        isModalOpen,
-        selectedNews: selectedNews?.title || "null"
-      });
-    }, 100);
   };
 
   const closeModal = () => {
-    console.log("🔥 Cerrando modal");
     setIsModalOpen(false);
     setSelectedNews(null);
   };
@@ -113,7 +91,7 @@ const NewsSection = () => {
   };
 
   // Verificar si el usuario puede modificar la noticia
-  const canModifyNews = (newsItem: News) => {
+  const canEditOrDelete = (newsItem: News) => {
     if (auth?.role === "admin" || auth?.role === "president" || auth?.role === "secretary_general") {
       return true;
     }
@@ -165,7 +143,6 @@ const NewsSection = () => {
   // Editar noticia
   // --------------------
   const handleEdit = (newsItem: News) => {
-    console.log("🔥 handleEdit llamada con:", newsItem);
     setEditingNews(newsItem);
     setTitle(newsItem.title);
     setContent(newsItem.content);
@@ -209,7 +186,6 @@ const NewsSection = () => {
   // Eliminar noticia
   // --------------------
   const handleDelete = async (id: string) => {
-    console.log("🔥 handleDelete llamada con ID:", id);
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta noticia? Esta acción no se puede deshacer.")) return;
     
     try {
@@ -217,21 +193,16 @@ const NewsSection = () => {
         headers: { Authorization: `Bearer ${auth?.token}` },
       });
       
-      // Actualizar la lista de noticias
       setNews((prev) => prev.filter((n) => n._id !== id));
       
-      // Cerrar el modal si está abierto
       if (isModalOpen) {
         closeModal();
       }
       
-      // Mostrar mensaje de éxito
       alert("Noticia eliminada correctamente");
       
     } catch (err: any) {
       console.error("Error eliminando noticia:", err);
-      
-      // Mostrar error específico si está disponible
       const errorMessage = err.response?.data?.message || "Error al eliminar la noticia. Intenta de nuevo.";
       alert(errorMessage);
     }
@@ -254,9 +225,6 @@ const NewsSection = () => {
     setType("general");
     setFloor(1);
   };
-
-  // 🔥 DEBUG DEL ESTADO ACTUAL
-  console.log("🔥 Render - Estado modal:", { isModalOpen, selectedNews: selectedNews?.title || null });
 
   return (
     <div className="flex flex-col h-full">
@@ -290,7 +258,7 @@ const NewsSection = () => {
               </div>
             </div>
           </div>
-      </div>
+        </div>
 
         {/* Lista de noticias */}
         <div className="max-h-[600px] overflow-y-auto divide-y divide-gray-100">
@@ -310,87 +278,90 @@ const NewsSection = () => {
             [...news]
               .sort(
                 (a, b) =>
-                  new Date(b.publishedAt).getTime() -
-                  new Date(a.publishedAt).getTime()
+                  new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
               )
               .map((item, index) => (
                 <div
                   key={item._id}
                   className="group hover:bg-gray-50 transition-colors duration-200"
                 >
-                  <div className="p-6 relative">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-3 mb-3">
-                          {item.type === "general" ? (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              General
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              <Building className="w-3 h-3 mr-1" />
-                              Piso {item.floor}
-                            </span>
-                          )}
-
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {getTimeAgo(item.publishedAt)}
-                          </span>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            {formatDate(item.publishedAt)}
-                          </div>
-                        </div>
-
-                        <h3
-                          className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log("🔥🔥🔥 CLICK EN TÍTULO DETECTADO!");
-                            console.log("🔥 Item completo:", item);
-                            console.log("🔥 Item._id:", item._id);
-                            console.log("🔥 Item.title:", item.title);
-                            console.log("🔥 Llamando openModal...");
-                            openModal(item);
-                          }}
-                        >
-                          {item.title}
-                        </h3>
-
-                        <p className="text-gray-600 mb-3 leading-relaxed">
-                          {truncateContent(item.content)}
-                        </p>
-
-                        <div className="flex items-center text-sm text-gray-500">
-                          <User className="w-4 h-4 mr-1" />
-                          <span>Por {getAuthorName(item.createdBy)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex-shrink-0"> {/* Header Fijo (SCROLL) */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log("🔥🔥🔥 CLICK EN 'VER MÁS' DETECTADO!");
-                            console.log("🔥 Item completo:", item);
-                            console.log("🔥 Llamando openModal...");
-                            openModal(item);
-                          }}
-                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition"
-                        >
-                          Ver más
-                          <ChevronRight className="w-4 h-4 ml-1" />
-                        </button>
-                      </div>
-                    </div>
-
+                  <div className="p-6 relative flex justify-between items-start">
                     {/* Indicador para la noticia más reciente */}
                     {index === 0 && (
                       <div className="absolute left-0 top-6 w-1 h-16 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full"></div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-3 mb-3">
+                        {item.type === "general" ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            General
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <Building className="w-3 h-3 mr-1" />
+                            Piso {item.floor}
+                          </span>
+                        )}
+
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {getTimeAgo(item.publishedAt)}
+                        </span>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {formatDate(item.publishedAt)}
+                        </div>
+                      </div>
+
+                      <h3
+                        className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition cursor-pointer"
+                        onClick={() => openModal(item)}
+                      >
+                        {item.title}
+                      </h3>
+
+                      <p className="text-gray-600 mb-3 leading-relaxed">
+                        {truncateContent(item.content)}
+                      </p>
+
+                      <div className="flex items-center text-sm text-gray-500">
+                        <User className="w-4 h-4 mr-1" />
+                        <span>Por {getAuthorName(item.createdBy)}</span>
+                      </div>
+                    </div>
+
+                    {/* Acciones - Nuevo diseño consistente */}
+                    {canEditOrDelete(item) && (
+                      <div className="flex justify-between pt-4 border-t">
+                        {/* Botón de ver detalles */}
+                        <button
+                          onClick={() => openModal(item)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-105"
+                          title="Ver detalles"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        
+                        {/* Botón de editar */}
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-all duration-200 hover:scale-105"
+                          title="Editar noticia"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        
+                        {/* Botón eliminar */}
+                        <button
+                          onClick={() => handleDelete(item._id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-105"
+                          title="Eliminar noticia"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -399,101 +370,84 @@ const NewsSection = () => {
         </div>
       </div>
 
-      {/* 🔥 Modal detalle - CORREGIDO */}
+      {/* Modal de detalles */}
       {isModalOpen && selectedNews && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center px-4">
-            <div
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-              onClick={closeModal}
-            ></div>
-            <div className="relative bg-white rounded-xl shadow-xl sm:w-full sm:max-w-2xl">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b rounded-t-xl flex justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    selectedNews.type === "general" 
-                      ? "bg-blue-100" 
-                      : "bg-green-100"
-                  }`}>
-                    {selectedNews.type === "general" ? (
-                      <Calendar className={`w-5 h-5 ${
-                        selectedNews.type === "general" ? "text-blue-600" : "text-green-600"
-                      }`} />
-                    ) : (
-                      <Building className="w-5 h-5 text-green-600" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {selectedNews.type === "general"
-                        ? "Noticia General"
-                        : `Noticia Piso ${selectedNews.floor}`}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {formatDate(selectedNews.publishedAt)}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6">
+            <div className="flex justify-between items-center border-b pb-4 mb-4">
+              <h3 className="text-lg font-semibold">
+                {selectedNews.type === "general"
+                  ? "Noticia General"
+                  : `Noticia Piso ${selectedNews.floor}`}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition-colors duration-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <div className="px-6 py-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
                   {selectedNews.title}
                 </h2>
-                <div className="flex items-center space-x-4 mb-6 text-sm text-gray-500">
-                  <div className="flex items-center">
-                    <User className="w-4 h-4 mr-1" />
-                    <span>Por {getAuthorName(selectedNews.createdBy)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-1" />
-                    <span>{getTimeAgo(selectedNews.publishedAt)}</span>
-                  </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {selectedNews.content}
+                  </p>
                 </div>
-                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {selectedNews.content}
-                </p>
               </div>
 
-              <div className="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-between items-center">
-                <div className="flex space-x-2">
-                  {canModifyNews(selectedNews) && (
-                    <>
-                      <button
-                        onClick={() => {
-                          console.log("🔥 Click en editar desde modal");
-                          closeModal();
-                          handleEdit(selectedNews);
-                        }}
-                        className="px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-lg hover:bg-yellow-200 transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => {
-                          console.log("🔥 Click en eliminar desde modal");
-                          handleDelete(selectedNews._id);
-                        }}
-                        className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-lg hover:bg-red-200 transition-colors"
-                      >
-                        Eliminar
-                      </button>
-                    </>
-                  )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center text-gray-600">
+                  <User className="w-4 h-4 mr-2" />
+                  <span>Por {getAuthorName(selectedNews.createdBy)}</span>
                 </div>
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cerrar
-                </button>
+
+                <div className="flex items-center text-gray-600">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <span>{formatDate(selectedNews.publishedAt)}</span>
+                </div>
+
+                <div className="flex items-center text-gray-600">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span>{getTimeAgo(selectedNews.publishedAt)}</span>
+                </div>
               </div>
+
+              {/* Acciones en el modal - Actualizadas */}
+              {canEditOrDelete(selectedNews) && (
+                <div className="flex justify-between pt-4 border-t">
+                  <button
+                    onClick={() => {
+                      closeModal();
+                      handleEdit(selectedNews);
+                    }}
+                    className="flex items-center px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors duration-200"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </button>
+                  
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleDelete(selectedNews._id)}
+                      className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors duration-200"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </button>
+                    <button
+                      onClick={closeModal}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

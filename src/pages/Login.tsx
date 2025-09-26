@@ -18,11 +18,15 @@ const Login: React.FC = () => {
     try {
       // Usamos la instancia api que ya tiene baseURL y withCredentials
       const response = await api.post('/auth/login', { email, password });
-
       console.log("Respuesta del backend:", response.data);
 
       // 👇 Ajusta estos nombres cuando veamos qué trae exactamente
       const { token, role, fullName, user, access_token } = response.data;
+      const finalToken = token || access_token;
+
+          const payload = JSON.parse(atob(finalToken.split('.')[1]));
+    console.log("Payload del JWT:", payload);
+    console.log("Datos del usuario:", user);
 
       // Por ahora validamos con cualquiera de los formatos comunes
       if (!token && !access_token) {
@@ -30,17 +34,19 @@ const Login: React.FC = () => {
       }
 
       // Usamos token en cualquiera de las dos variantes
-      const finalToken = token || access_token;
+/*       const finalToken = token || access_token; */
 
       // Guardamos la info en el store
       setAuth({
-        _id: user?._id || null,
+        _id: payload.sub || user?._id || null, // Usar payload.sub
         token: finalToken,
-        email: user?.email || email,
-        role: role || user?.role || null,
-        fullName: fullName || user?.fullName || null,
-        floor: user?.floor ?? null,
+        email: payload.email || user?.email || email,
+        role: payload.role || role || user?.role || null,
+        fullName: payload.fullName || fullName || user?.fullName || null,
+        floor: payload.floor ?? user?.floor ?? null, // ← CAMBIO AQUÍ
       });
+      
+      console.log('Auth seteado con floor:', payload.floor);
 
       localStorage.setItem('token', finalToken);
 
