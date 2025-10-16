@@ -6,16 +6,21 @@ import QuickActions from "../../components/QuickActions";
 import { AdminDashboardData, Stats } from "./types";
 
 interface AdminDashboardProps {
-  data: AdminDashboardData; // 👈 recibe la data ya cargada
-  activeSection: string;
-  setActiveSection: Dispatch<SetStateAction<string>>;
+  data?: AdminDashboardData; // 👈 ahora opcional
+  activeSection?: string;
+  setActiveSection?: Dispatch<SetStateAction<string>>;
   children?: ReactNode;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ data, activeSection, setActiveSection, children }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  data = { stats: {}, rooms: [], reports: [], floorRanking: [] },
+  activeSection = "",
+  setActiveSection = () => {},
+  children,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const stats: Stats = data.stats || {
+  const stats: Stats = (data?.stats as Stats) ?? {
     totalResidents: 0,
     activeResidents: 0,
     totalRooms: 0,
