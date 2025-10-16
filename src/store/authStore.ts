@@ -5,7 +5,7 @@ export type AuthData = {
   _id: string | null;  
   token: string | null;
   email: string | null;
-  role: "admin" | "resident" | "president" | "secretary_general" | "representative" | "auditor" | 'floor_auditor' | 'general_auditor' | null; // 🔹 roles explícitos
+  role: "admin" | "resident" | "president" | "vice_president" | "secretary_general" | "representative" | "auditor" | 'floor_auditor' | 'general_auditor' | null; // 🔹 roles explícitos
   fullName: string | null;
   floor: number | null; // 🔹 siempre presente, no opcional
 };
