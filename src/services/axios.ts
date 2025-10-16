@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/authStore";
 
 // ✅ Detecta automáticamente el entorno
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+  baseURL: import.meta.env.VITE_API_URL || "https://residencias-backend.onrender.com",
   withCredentials: true, // útil si manejas cookies o sesiones
 });
 
